@@ -66,13 +66,10 @@ public struct Property<R, V>: PropertyProtocol {
     public init(key: KP, value: Value) {
         self.key = key
         self.value = value
-        self.applicator = {root, value, _ in 
+        self.applicator = { root, passed, _ in
             var instance: R = root as! R
-            if let value = value as? V {
-                instance[keyPath: key] = value
-                return (instance, true)
-            }
-            return (instance, false)
+            instance[keyPath: key] = (passed as? V) ?? value
+            return (instance, true)
         }
     }
     
