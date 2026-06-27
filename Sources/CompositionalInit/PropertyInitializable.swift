@@ -36,5 +36,29 @@ public extension PropertyInitializable {
     init?(_ properties: PartialProperty<Self>...) {
         self.init(properties)
     }
+    
+    init?(_ properties: [AnyProperty]) {
+        var new = Self._blank
+        var propertiesLeftToInit = new.numberOfNonOptionalProperties
+        
+        for property in properties {
+            let value = property.value
+            let (updated, didChange) = property.apply(value: value, to: new)
+            if didChange {
+                guard let updated = updated as? Self else {
+                    return nil
+                }
+                
+                new = updated
+                if !isOptional(value) { propertiesLeftToInit -= 1 }
+            }
+        }
+        
+        if propertiesLeftToInit == 0 { self = new; return } else { return nil }
+    }
+    
+    init?(_ properties: AnyProperty...) {
+        self.init(properties)
+    }
 }
 
