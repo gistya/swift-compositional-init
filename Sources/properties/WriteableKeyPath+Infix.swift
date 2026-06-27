@@ -3,14 +3,19 @@
 infix operator <-
 
 public extension WritableKeyPath {
-    static func <- (left: WritableKeyPath<Root, Value>, right: @autoclosure @escaping () throws -> Value) throws -> PartialProperty<Root> {
-        return Property<Root, Value>(key: left, value: try right()).partial
+    static func <- (left: WritableKeyPath<Root, Value>, right: Value) -> AnyProperty {
+        Property<Root, Value>(key: left, value: right).any
+    }
+
+    static func <- (left: WritableKeyPath<Root, Value>, right: Value) -> PartialProperty<Root> {
+        Property<Root, Value>(key: left, value: right).partial
     }
 }
 
-/// Extension to support <- operator with Mockable root.
+/// `<-` for a `Mockable` root, pairing a key path with a `Mock` value (now non-throwing, matching
+/// the plain `<-`). Restored after the non-throwing refactor dropped it.
 public extension WritableKeyPath where Root: Mockable {
-    static func <- (left: WritableKeyPath<Root, Value>, right: Mock<Value>) throws -> PartialProperty<Root> {
-        return MockProperty<Root, Value>(key: left, mock: right).partial
+    static func <- (left: WritableKeyPath<Root, Value>, right: Mock<Value>) -> PartialProperty<Root> {
+        MockProperty<Root, Value>(key: left, mock: right).partial
     }
 }

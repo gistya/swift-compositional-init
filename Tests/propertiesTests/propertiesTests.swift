@@ -51,11 +51,11 @@ extension Test2: PropertyInitializable {
     let test3 = Test2(properties3)
     assert(test3 == nil, "test3 should be nil")
     
-    let test4 = Test2(clone: test2!, with: properties4)
+    let test4 = test2!.clone(mutating: properties4)
     assert(test4.str1 == "asdf", "test4.str1 should be 'asdf'")
     assert(test4.int4 == nil, "test4.int4 should be nil")
-    
-    let test5 = Test2(clone: test2!, with: properties3)
+
+    let test5 = test2!.clone(mutating: properties3)
     assert(test5.str1 == "asdf", "test5.str1 should be 'asdf'")
     assert(test5.int4 == 1337, "test5.int5 should be 1337")
     

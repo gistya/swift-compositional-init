@@ -1,19 +1,8 @@
-//
-//  PropertyInitializable.swift
-//  properties
-//
-//  Created by Jonathan Gilbert on 6/20/26.
-//
-
-
 /// Allows an object to be defined as PropertyInitializable.
 /// This allows it to be initialized from a collection of keypath-value pairs (Properties).
-public protocol PropertyInitializable {
+public protocol PropertyInitializable: Clonable {
     /// Init from an array of properties.
     init?(_ properties: [PartialProperty<Self>])
-    
-    /// Create a clone with an array of mutations represented as keypath-value pairs (Properties).
-    init(clone: Self, with mutations: [PartialProperty<Self>])
     
     /// A default getter for a "blank" object with its variables all initialized, 
     /// necessary since Swift 5 keypaths may not be used at actual init time to set values.
@@ -47,13 +36,5 @@ public extension PropertyInitializable {
     init?(_ properties: PartialProperty<Self>...) {
         self.init(properties)
     }
-    
-    init(clone: Self, with mutations: [PartialProperty<Self>]) {
-        self = clone
-        for mutation in mutations { (self, _) = mutation.apply(value: mutation.value, to: self) }
-    }
-    
-    init(clone: Self, with mutations: PartialProperty<Self>...) {
-        self.init(clone: clone, with: mutations)
-    }
 }
+
