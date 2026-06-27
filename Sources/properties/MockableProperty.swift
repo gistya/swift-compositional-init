@@ -42,7 +42,7 @@ public extension MockableProperty {
     }
     
     /// Applies the `mock` value to the `root` object of this MockProperty.
-    public func apply(mock: Mock<Value>, to root: Root) -> (Root, didChange: Bool) {
+    func apply(mock: Mock<Value>, to root: Root) -> (Root, didChange: Bool) {
         return applicator(root, mock, nil) as! (Self.Root, didChange: Bool)
     }
 }

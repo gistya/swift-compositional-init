@@ -14,7 +14,7 @@ public struct MockProperty<R: Mockable, V>: MockableProperty {
     
     /// Initializing a MockProperty with a single value defaults the creationMethod to .single.
     public init(key: KP, value: Value) {
-        let mock: Mock<Value> = try! Mock<Value>(
+        let mock: Mock<Value> = Mock<Value>(
             \.creationMethod <- .single(value)
         )!
         self.init(key: key, mock: mock)
@@ -24,7 +24,7 @@ public struct MockProperty<R: Mockable, V>: MockableProperty {
     /// .iterate mode, where the getter will iterate to the next value each time, or
     /// .randomize mode, where it will pick randomly from a set of values each time the getter is used.
     public init(key: KP, possibleValues: [Value], shouldRandomize: Bool = false, iteration: Int) {
-        let mock: Mock<Value> = try! Mock<Value>(
+        let mock: Mock<Value> = Mock<Value>(
             \.iteration <- iteration,
             \.creationMethod <- (shouldRandomize 
                 ? .randomize(possibleValues) 

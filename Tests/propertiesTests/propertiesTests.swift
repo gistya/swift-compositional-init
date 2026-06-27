@@ -60,7 +60,7 @@ extension Test2: PropertyInitializable {
     assert(test5.int4 == 1337, "test5.int5 should be 1337")
     
     /// Compiler won't accept this unless the we wrap the cast in parentheses.
-    let fooProps: [PartialProperty<Foo>] = try! [
+    let fooProps: [PartialProperty<Foo>] = [
         (\Foo.bar as! WritableKeyPath) <- 5
     ]
     
@@ -119,7 +119,7 @@ extension Test2: PropertyInitializable {
 
     /// Example 1 of using PropertyInitializable init with iterable value.
     for i in 0...5 {
-        magtest2.append((try! Mag(
+        magtest2.append((Mag(
             \.a <- 2,
             \.b <- Mock(iteration: i, default: nil, creationMethod: .iterate(["a", "b", "c", "d", "e"])),
             \.c <- nil
@@ -134,33 +134,29 @@ extension Test2: PropertyInitializable {
         assert(magtest2[i].b == letters[i])
     }
 
-    do {
-        let testHat = try Hat(
-            /// Breaks if uncommented, as expected since a is let.
-            //\.a <- 2,
-            
-            /// Breaks if uncommented, as expected since b is private.
-            //\.b <- 2,
-            
-            /// Breaks if uncommented, as expected since d is let.
-            //\.d = 2,
-            
-            /// Breaks if uncommented, as expected since e is private.
-            //\.e = 2,
-            
-            /// Breaks if uncommented, as expected since f has a default value,
-            /// and private(set) is externally immutable once set.
-            //\.f = 2,
-            
-            \.c <- 2,
-            \.g <- 2,
-            \.h <- 2
-        )
+    let testHat = Hat(
+        /// Breaks if uncommented, as expected since a is let.
+        //\.a <- 2,
         
-        assert(testHat != nil)
-    } catch {
-        print(error)
-    }
+        /// Breaks if uncommented, as expected since b is private.
+        //\.b <- 2,
+        
+        /// Breaks if uncommented, as expected since d is let.
+        //\.d = 2,
+        
+        /// Breaks if uncommented, as expected since e is private.
+        //\.e = 2,
+        
+        /// Breaks if uncommented, as expected since f has a default value,
+        /// and private(set) is externally immutable once set.
+        //\.f = 2,
+        
+        \.c <- 2,
+        \.g <- 2,
+        \.h <- 2
+    )
+    
+    assert(testHat != nil)
 
     struct Customer: PropertyInitializable {
         var name: String = ""
