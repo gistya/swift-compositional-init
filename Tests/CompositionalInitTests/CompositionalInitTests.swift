@@ -121,7 +121,7 @@ extension Test2: PropertyInitializable {
     for i in 0...5 {
         magtest2.append((Mag(
             \.a <- 2,
-            \.b <- Source(iteration: i, valuesToIterate: ["a", "b", "c", "d", "e"]),
+            \.b <- .iterate(Iteration(i), ["a", "b", "c", "d", "e"]),
             \.c <- nil
             ))!
         )

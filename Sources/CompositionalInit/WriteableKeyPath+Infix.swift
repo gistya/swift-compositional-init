@@ -14,8 +14,8 @@ public extension WritableKeyPath {
 
 /// `<-` for a `PropertyInitializable` root, pairing a key path with a `Source` value (now non-throwing, matching
 /// the plain `<-`). Restored after the non-throwing refactor dropped it.
-public extension WritableKeyPath where Root: PropertyInitializable {
-    static func <- (left: WritableKeyPath<Root, Value>, right: Source<Value>) -> PartialProperty<Root> {
-        DynamicProperty<Root, Value>(key: left, source: right).partial
+public extension WritableKeyPath {
+    static func <- (left: WritableKeyPath<Root, Value>, right: Property<Root, Value>.Source) -> PartialProperty<Root> {
+        Property<Root, Value>(key: left, source: right).partial
     }
 }

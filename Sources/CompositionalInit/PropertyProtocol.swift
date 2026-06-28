@@ -18,6 +18,7 @@ where KP: PartialKeyPath<Root> {
 /// An object available as a keypath-value pair.
 public protocol PropertyProtocol: PartialPropertyProtocol
 where KP: WritableKeyPath<Root, Value> {
+//    var source: Source { get }
 }
 
 extension AnyPropertyProtocol {
