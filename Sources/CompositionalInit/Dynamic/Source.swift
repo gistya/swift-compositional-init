@@ -1,4 +1,4 @@
-/// Struct defining the configurable and default behavior for MockableProperties.
+/// Struct defining the configurable and default behavior for SourceableProperties.
 public struct Source<Value>: PropertyInitializable {
     public indirect enum CreationMethod {
         case none
