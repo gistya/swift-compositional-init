@@ -10,12 +10,20 @@ public extension WritableKeyPath {
     static func <- (left: WritableKeyPath<Root, Value>, right: Value) -> PartialProperty<Root> {
         Property<Root, Value>(key: left, value: right).partial
     }
-}
+    
+    static func <- (left: WritableKeyPath<Root, Value>, right: Property<Root, Value>.Source) -> AnyProperty {
+        Property<Root, Value>(key: left, source: right).any
+    }
 
-/// `<-` for a `PropertyInitializable` root, pairing a key path with a `Source` value (now non-throwing, matching
-/// the plain `<-`). Restored after the non-throwing refactor dropped it.
-public extension WritableKeyPath {
     static func <- (left: WritableKeyPath<Root, Value>, right: Property<Root, Value>.Source) -> PartialProperty<Root> {
         Property<Root, Value>(key: left, source: right).partial
+    }
+    
+    static func <- (left: WritableKeyPath<Root, Value>, right: @escaping () -> Value) -> AnyProperty {
+        Property<Root, Value>(key: left, source: .closure(right)).any
+    }
+    
+    static func <- (left: WritableKeyPath<Root, Value>, right: @escaping () -> Value) -> PartialProperty<Root> {
+        Property<Root, Value>(key: left, source: .closure(right)).partial
     }
 }

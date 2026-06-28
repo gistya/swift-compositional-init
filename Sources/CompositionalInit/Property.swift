@@ -76,26 +76,26 @@ public struct Property<R, V>: PropertyProtocol {
     
     public var applicator: (Any, Any?, Any?) -> (Any, didChange: Bool)
     
-    /// Initializing a DynamicProperty with a single value defaults the origin to .single.
+    /// Initializing a Property with a single value defaults the origin to .single.
     public init(key: KP, value: Value) {
         self.init(key: key, source: .single(value))
     }
     
-    /// Initializing a DynamicProperty with a range of possibleValues enables the property to be in
+    /// Initializing a Property with a range of possibleValues enables the property to be in
     /// .iterate mode, where the getter will iterate to the next value each time, or
     /// .randomize mode, where it will pick randomly from a set of values each time the getter is used.
     public init(key: KP, iteration i: Int, valuesToIterate values: [Value], default: Value? = nil) {
         self.init(key: key, source: .iterate(Iteration(i), values))
     }
     
-    /// Initializing a DynamicProperty with a closure function sets the origin to
+    /// Initializing a Property with a closure function sets the origin to
     /// .generate, where the function `closure` will be called whenever the getter is invoked,
     /// and it may use the passed-in `origin` to inform its behavior.
     public init(key: KP, closure: @autoclosure @escaping () -> Value) {
         self.init(key: key, source: .closure(closure))
     }
     
-    /// Initializing a SourcePropety with a predefined Source behavior object created before-hand.
+    /// Initializing a Property with a predefined Source behavior object created before-hand.
     /// This function is called by the other initializers.
     public init(key: KP, source: Source) {
         self.source = source
@@ -149,7 +149,7 @@ public struct Property<R, V>: PropertyProtocol {
         }
     }
     
-    /// Applies the `source` value to the `root` object of this DynamicProperty.
+    /// Applies the `source` value to the `root` object of this Property.
     func apply(source: Source, to root: Root) -> (Root, didChange: Bool) {
         return applicator(root, source, nil) as! (Self.Root, didChange: Bool)
     }
