@@ -124,3 +124,34 @@ public struct WritableCasePath<Root, Value>: Sendable {
         appending(keyPath)
     }
 }
+
+public extension CasePath where Root: Equatable {
+    /// Build a case path from just the case initializer — `CasePath(Event.increment)` — deriving
+    /// `extract` by reflection: pull the case's single associated value and confirm the case by
+    /// re-embedding and comparing (hence the `Root: Equatable` requirement). Handles unlabeled
+    /// (`case foo(Int)`), labeled (`case foo(by: Int)`), and tuple (`case foo(Int, String)`) payloads.
+    ///
+    /// This is the macro-free, swift-syntax-free way to get an ergonomic case path: no hand-written
+    /// `extract` closure, no codegen.
+    init(_ embed: @escaping @Sendable (Value) -> Root) {
+        self.init(
+            embed: embed,
+            extract: { root in
+                let mirror = Mirror(reflecting: root)
+                guard mirror.displayStyle == .enum, let raw = mirror.children.first?.value else { return nil }
+                let candidate: Value?
+                if let direct = raw as? Value {
+                    candidate = direct
+                } else {
+                    // A labeled single payload (`foo(by: Int)`) reflects as a 1-element tuple; unwrap it.
+                    let inner = Mirror(reflecting: raw)
+                    candidate = (inner.displayStyle == .tuple && inner.children.count == 1)
+                        ? inner.children.first?.value as? Value
+                        : nil
+                }
+                guard let value = candidate, embed(value) == root else { return nil }
+                return value
+            }
+        )
+    }
+}

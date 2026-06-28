@@ -73,7 +73,7 @@ private struct OptionalHolder: Equatable {
 }
 
 @Test func anyPropertyIsNoOpOnRootTypeMismatch() {
-    let any: AnyProperty = \Box.n <- 3
+    let any: AnyProperty = \Box.n |<- 3
     // Applying a Box-rooted property to a non-Box box must do nothing (safe `as?`, no trap).
     var wrong: Any = "untouched"
     any.apply(to: &wrong)
@@ -88,7 +88,7 @@ private struct OptionalHolder: Equatable {
     partial.apply(to: &b)
     #expect(b == Box(n: 1))
 
-    let any: AnyProperty = \Box.n <- 2
+    let any: AnyProperty = \Box.n |<- 2
     #expect(any.value as? Int == 2)
 }
 
@@ -98,7 +98,7 @@ private struct OptionalHolder: Equatable {
     partial.apply(to: &b)
     #expect(b == Box(n: 11))
 
-    let any: AnyProperty = \Box.n <- Property<Box, Int>.Source.single(22)
+    let any: AnyProperty = \Box.n |<- Property<Box, Int>.Source.single(22)
     #expect(any.value as? Int == 22)
 }
 
@@ -108,7 +108,7 @@ private struct OptionalHolder: Equatable {
     partial.apply(to: &b)
     #expect(b == Box(n: 33))
 
-    let any: AnyProperty = \Box.n <- { 44 }
+    let any: AnyProperty = \Box.n |<- { 44 }
     #expect(any.value as? Int == 44)
 }
 

@@ -64,19 +64,19 @@ private struct Person: PropertyInitializable, Equatable {
 // MARK: init?([AnyProperty]) — fully type-erased path
 
 @Test func initFromAnyPropertyArray() {
-    let props: [AnyProperty] = [\Person.name <- "Alan", \Person.age <- 41]
+    let props: [AnyProperty] = [\Person.name |<- "Alan", \Person.age |<- 41]
     let p = Person(props)
     #expect(p == Person(name: "Alan", age: 41, nickname: nil))
 }
 
 @Test func initFromAnyPropertyArrayFailsWhenRequiredMissing() {
-    let props: [AnyProperty] = [\Person.name <- "Alan"]
+    let props: [AnyProperty] = [\Person.name |<- "Alan"]
     #expect(Person(props) == nil)
 }
 
 @Test func initFromAnyPropertyVariadic() {
-    let a1: AnyProperty = \Person.name <- "Edsger"
-    let a2: AnyProperty = \Person.age <- 60
+    let a1: AnyProperty = \Person.name |<- "Edsger"
+    let a2: AnyProperty = \Person.age |<- 60
     let p = Person(a1, a2)
     #expect(p == Person(name: "Edsger", age: 60, nickname: nil))
 }
