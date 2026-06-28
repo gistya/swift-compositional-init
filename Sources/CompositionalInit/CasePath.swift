@@ -1,8 +1,24 @@
+/// Wraps an immutable key path so it can be captured by `@Sendable` closures.
+///
+/// Key paths are deeply immutable and therefore thread-safe, but `WritableKeyPath` does not (yet)
+/// carry a `Sendable` conformance in the standard library. This `@unchecked` conformance is the
+/// minimal, provably-safe shim that lets ``CasePath``/``WritableCasePath`` stay *checked*-`Sendable`
+/// at their public surface rather than marking the whole optic `@unchecked`.
+@usableFromInline
+struct SendableKeyPath<Root, Value>: @unchecked Sendable {
+    @usableFromInline let keyPath: WritableKeyPath<Root, Value>
+    @usableFromInline init(_ keyPath: WritableKeyPath<Root, Value>) { self.keyPath = keyPath }
+}
+
 /// A `CasePath` is the enum counterpart to a `WritableKeyPath`.
 /// `embed` wraps a payload into the case, and `extract` pulls it back out when the value is in that case.
 ///
 /// It is the prism to `WritableKeyPath`'s lens — together they let `<-` / `clone(mutating:)`
 /// reach through both enums and other types.
+///
+/// The stored closures are `@Sendable`, so `CasePath` is unconditionally and *checked* `Sendable`
+/// (no `@unchecked` escape hatch). Build a case path from non-capturing closures such as an enum
+/// case constructor and a pattern-match extractor:
 ///
 /// ```swift
 /// enum Traffic {
@@ -16,13 +32,16 @@
 ///     }
 /// }
 /// ```
-public struct CasePath<Root, Value>: @unchecked Sendable {
-    public let embed: (Value) -> Root
-    public let extract: (Root) -> Value?
+public struct CasePath<Root, Value>: Sendable {
+    /// Wraps a `Value` payload into the `Root` case this path focuses.
+    public let embed: @Sendable (Value) -> Root
+    /// Returns the payload if `root` is in this case, else `nil`.
+    public let extract: @Sendable (Root) -> Value?
 
+    /// Creates a case path from an `embed`/`extract` pair.
     public init(
-        embed: @escaping (Value) -> Root,
-        extract: @escaping (Root) -> Value?
+        embed: @escaping @Sendable (Value) -> Root,
+        extract: @escaping @Sendable (Root) -> Value?
     ) {
         self.embed = embed
         self.extract = extract
@@ -46,17 +65,20 @@ public struct CasePath<Root, Value>: @unchecked Sendable {
     /// Compose with a `WritableKeyPath` into the payload — the prism∘lens that focuses a stored
     /// property nested inside an enum case (reads `nil` / writes are no-ops off-case).
     public func appending<Sub>(_ keyPath: WritableKeyPath<Value, Sub>) -> WritableCasePath<Root, Sub> {
-        WritableCasePath(
-            get: { extract($0)?[keyPath: keyPath] },
+        let extract = self.extract
+        let embed = self.embed
+        let kp = SendableKeyPath(keyPath)
+        return WritableCasePath(
+            get: { extract($0)?[keyPath: kp.keyPath] },
             set: { root, sub in
                 guard var value = extract(root) else { return root }
-                value[keyPath: keyPath] = sub
+                value[keyPath: kp.keyPath] = sub
                 return embed(value)
             }
         )
     }
 
-    /// Sugar for `appending(_:)`: e.g. `Traffic.Path.crossing(\.pedestrian)`.
+    /// Sugar for ``appending(_:)``: e.g. `Traffic.Path.crossing(\.pedestrian)`.
     public func callAsFunction<Sub>(_ keyPath: WritableKeyPath<Value, Sub>) -> WritableCasePath<Root, Sub> {
         appending(keyPath)
     }
@@ -65,13 +87,18 @@ public struct CasePath<Root, Value>: @unchecked Sendable {
 /// The composition of a `CasePath` with a `WritableKeyPath`: an **affine** writable optic that
 /// focuses a stored property nested inside an enum case. Reads are `nil` and writes are no-ops when
 /// the root isn't in the case.
-public struct WritableCasePath<Root, Value>: @unchecked Sendable {
-    public let get: (Root) -> Value?
-    public let set: (Root, Value) -> Root
+///
+/// Like ``CasePath``, the stored closures are `@Sendable`, so this is checked `Sendable`.
+public struct WritableCasePath<Root, Value>: Sendable {
+    /// Reads the focused property, or `nil` if `root` isn't in the underlying case.
+    public let get: @Sendable (Root) -> Value?
+    /// Writes the focused property, returning `root` unchanged if it isn't in the underlying case.
+    public let set: @Sendable (Root, Value) -> Root
 
+    /// Creates a writable case path from a `get`/`set` pair.
     public init(
-        get: @escaping (Root) -> Value?,
-        set: @escaping (Root, Value) -> Root
+        get: @escaping @Sendable (Root) -> Value?,
+        set: @escaping @Sendable (Root, Value) -> Root
     ) {
         self.get = get
         self.set = set
@@ -79,18 +106,21 @@ public struct WritableCasePath<Root, Value>: @unchecked Sendable {
 
     /// Compose further into a deeper stored property.
     public func appending<Sub>(_ keyPath: WritableKeyPath<Value, Sub>) -> WritableCasePath<Root, Sub> {
-        WritableCasePath<Root, Sub>(
-            get: { get($0)?[keyPath: keyPath] },
+        let get = self.get
+        let set = self.set
+        let kp = SendableKeyPath(keyPath)
+        return WritableCasePath<Root, Sub>(
+            get: { get($0)?[keyPath: kp.keyPath] },
             set: { root, sub in
                 guard var value = get(root) else { return root }
-                value[keyPath: keyPath] = sub
+                value[keyPath: kp.keyPath] = sub
                 return set(root, value)
             }
         )
     }
 
+    /// Sugar for ``appending(_:)``.
     public func callAsFunction<Sub>(_ keyPath: WritableKeyPath<Value, Sub>) -> WritableCasePath<Root, Sub> {
         appending(keyPath)
     }
 }
-

@@ -1,29 +1,39 @@
-/// Operator <- allows association of a keypath with a value in a typesafe manner
-/// without initializing the root object.
+/// The `<-` operator pairs a `WritableKeyPath` with a value (or value source) in a type-safe way,
+/// *without* constructing the root object — the surface syntax of compositional initialization.
+///
+/// Because `\Root.value` is a `WritableKeyPath<Root, Value>`, the pairing `\Root.value <- x` fails
+/// to compile if the property is inaccessible, read-only, non-existent, or of a different type than
+/// `x` — all the static guarantees of key paths carry through.
 infix operator <-
 
 public extension WritableKeyPath {
-    static func <- (left: WritableKeyPath<Root, Value>, right: Value) -> AnyProperty {
-        Property<Root, Value>(key: left, value: right).any
+    /// Pairs `self` with a fixed value, erasing only the value type → ``PartialProperty``.
+    static func <- (keyPath: WritableKeyPath<Root, Value>, value: Value) -> PartialProperty<Root> {
+        Property(key: keyPath, value: value).partial
     }
 
-    static func <- (left: WritableKeyPath<Root, Value>, right: Value) -> PartialProperty<Root> {
-        Property<Root, Value>(key: left, value: right).partial
-    }
-    
-    static func <- (left: WritableKeyPath<Root, Value>, right: Property<Root, Value>.Source) -> AnyProperty {
-        Property<Root, Value>(key: left, source: right).any
+    /// Pairs `self` with a fixed value, fully erasing root and value → ``AnyProperty``.
+    static func <- (keyPath: WritableKeyPath<Root, Value>, value: Value) -> AnyProperty {
+        Property(key: keyPath, value: value).any
     }
 
-    static func <- (left: WritableKeyPath<Root, Value>, right: Property<Root, Value>.Source) -> PartialProperty<Root> {
-        Property<Root, Value>(key: left, source: right).partial
+    /// Pairs `self` with an explicit ``Property/Source`` → ``PartialProperty``.
+    static func <- (keyPath: WritableKeyPath<Root, Value>, source: Property<Root, Value>.Source) -> PartialProperty<Root> {
+        Property(key: keyPath, source: source).partial
     }
-    
-    static func <- (left: WritableKeyPath<Root, Value>, right: @escaping () -> Value) -> AnyProperty {
-        Property<Root, Value>(key: left, source: .closure(right)).any
+
+    /// Pairs `self` with an explicit ``Property/Source`` → ``AnyProperty``.
+    static func <- (keyPath: WritableKeyPath<Root, Value>, source: Property<Root, Value>.Source) -> AnyProperty {
+        Property(key: keyPath, source: source).any
     }
-    
-    static func <- (left: WritableKeyPath<Root, Value>, right: @escaping () -> Value) -> PartialProperty<Root> {
-        Property<Root, Value>(key: left, source: .closure(right)).partial
+
+    /// Pairs `self` with a closure evaluated lazily at application time → ``PartialProperty``.
+    static func <- (keyPath: WritableKeyPath<Root, Value>, make: @escaping () -> Value) -> PartialProperty<Root> {
+        Property(key: keyPath, source: .closure(make)).partial
+    }
+
+    /// Pairs `self` with a closure evaluated lazily at application time → ``AnyProperty``.
+    static func <- (keyPath: WritableKeyPath<Root, Value>, make: @escaping () -> Value) -> AnyProperty {
+        Property(key: keyPath, source: .closure(make)).any
     }
 }

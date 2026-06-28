@@ -1,14 +1,15 @@
-infix operator +: AdditionPrecedence
-
-/// Convenience extension on Array to support arrays of PartialProperty items.
-public extension Array where Element == PartialProperty<Any?> {
-    /// Infix operator function for partially type-erasing a Property tuple
-    /// and adding it to an array of PartialProperties. This allows the variable type
-    /// of each property to be different without violating the static typing of the array.
-    static func + <Root, Value>(left: Array<PartialProperty<Root>>, right: (WritableKeyPath<Root, Value>, Value)) -> Array<PartialProperty<Root>> { 
-        var new = left
-        let partial = (Property<Root, Value>(key: right.0, value: right.1)).partial
-        new.append(partial)
-        return new
-    }
+/// Appends a key-path/value pair to an array of ``PartialProperty`` without breaking the array's
+/// static type, even though each pair may have a different value type.
+///
+/// ```swift
+/// let props: [PartialProperty<Foo>] = [] + (\.bar, "two") + (\.baz, 2.0)
+/// ```
+///
+/// Implemented as a free `+` overload (rather than a constrained `Array` extension) so it composes
+/// cleanly for any element root type.
+public func + <Root, Value>(
+    lhs: [PartialProperty<Root>],
+    rhs: (WritableKeyPath<Root, Value>, Value)
+) -> [PartialProperty<Root>] {
+    lhs + [Property(key: rhs.0, value: rhs.1).partial]
 }

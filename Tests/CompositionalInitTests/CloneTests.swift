@@ -1,7 +1,7 @@
 import Testing
 @testable import CompositionalInit
 
-private struct State: Clonable, Equatable {
+private struct State: Cloneable, Equatable {
     var count: Int
     var label: String
 }
@@ -41,7 +41,7 @@ private struct State: Clonable, Equatable {
 
 // MARK: clone(mutating:) — case-path array form
 
-private enum Light: Equatable, Clonable {
+private enum Light: Equatable, Cloneable {
     case on(Int)
     case off
 

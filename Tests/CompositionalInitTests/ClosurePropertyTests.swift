@@ -6,7 +6,7 @@ import Testing
 // for that function type (while `(consuming T) -> U` happened to survive). The applicator now uses
 // the captured typed value, so any value type — closures with ownership modifiers included — works.
 
-private struct Holder: Clonable, Sendable {
+private struct Holder: Cloneable, Sendable {
     var predicate: (@Sendable (borrowing Int) -> Bool)?
     var transform: (@Sendable (consuming Int) -> Int)?
     var plain: Int

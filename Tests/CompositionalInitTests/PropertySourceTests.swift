@@ -6,47 +6,17 @@ private struct Box: PropertyInitializable, Equatable {
     static var _blank: Box { Box(n: 0) }
 }
 
+private struct OptionalHolder: Equatable {
+    var required: Int
+    var maybe: String?
+}
+
 // MARK: Source.single
 
 @Test func singleSourceValueGetter() {
     let p = Property<Box, Int>(key: \.n, value: 7)
     #expect(p.value == 7)
-}
-
-@Test func valueSetterIsNoOp() {
-    // The setter exists only to satisfy `var value`; it must not change anything.
-    var p = Property<Box, Int>(key: \.n, value: 7)
-    p.value = 999
-    #expect(p.value == 7)
-}
-
-// MARK: Source.iterate
-
-@Test func iterateSourceAdvancesThenWrapsCyclically() {
-    let values = [10, 20, 30]
-    let p = Property<Box, Int>(key: \.n, iteration: 0, valuesToIterate: values)
-    // Iterating well past the end cycles back through the values (index % count).
-    let observed = (0..<7).map { _ in p.value }
-    #expect(observed == [10, 20, 30, 10, 20, 30, 10])
-}
-
-@Test func iterateInitWithDefaultArgument() {
-    // The `default:` parameter is accepted (currently unused) — exercise that overload.
-    let p = Property<Box, Int>(key: \.n, iteration: 1, valuesToIterate: [5, 6, 7], default: 0)
-    #expect(p.value == 6) // starts at index 1
-}
-
-// MARK: Source.randomize
-
-@Test func randomizeSourceReturnsAMemberOfTheSet() {
-    let values = [1, 2, 3, 4]
-    let p = Property<Box, Int>(key: \.n, source: .randomize(values))
-    for _ in 0..<20 { #expect(values.contains(p.value)) }
-}
-
-@Test func randomizeSingleElementIsDeterministic() {
-    let p = Property<Box, Int>(key: \.n, source: .randomize([42]))
-    #expect(p.value == 42)
+    #expect(p.source.value == 7)
 }
 
 // MARK: Source.closure
@@ -67,82 +37,96 @@ private struct Box: PropertyInitializable, Equatable {
     #expect(p.value == 12)
 }
 
-// MARK: type erasure — partial / any
+// MARK: type-based optional classification
 
-@Test func partialErasurePreservesKeyAndValue() {
-    let p = Property<Box, Int>(key: \.n, value: 5)
-    let partial = p.partial
-    #expect(partial.key == (\Box.n as PartialKeyPath<Box>))
-    #expect(partial.value as? Int == 5)
+@Test func isOptionalReflectsStaticValueType() {
+    #expect(Property(key: \OptionalHolder.required, value: 1).isOptional == false)
+    // Optional-typed slot is "optional" even when given a non-nil value.
+    #expect(Property(key: \OptionalHolder.maybe, value: "x").isOptional == true)
+    #expect(Property(key: \OptionalHolder.maybe, value: nil).isOptional == true)
 }
 
-@Test func anyErasureFromProperty() {
-    let any = Property<Box, Int>(key: \.n, value: 8).any
+// MARK: typed application — no boxing, no casts
+
+@Test func partialPropertyAppliesTypedWrite() {
+    let p: PartialProperty<Box> = \.n <- 5
+    #expect(p.key == (\Box.n as PartialKeyPath<Box>))
+    #expect(p.isOptional == false)
+    var box = Box(n: 0)
+    p.apply(to: &box)
+    #expect(box == Box(n: 5))
+}
+
+@Test func propertyPartialAndAnyErasureApply() {
+    let property = Property<Box, Int>(key: \.n, value: 8)
+
+    var b1 = Box(n: 0)
+    property.partial.apply(to: &b1)
+    #expect(b1 == Box(n: 8))
+
+    let any = property.any
     #expect(any.value as? Int == 8)
     #expect(any.key == (\Box.n as AnyKeyPath))
+    var b2: Any = Box(n: 0)
+    any.apply(to: &b2)
+    #expect((b2 as? Box) == Box(n: 8))
 }
 
-@Test func anyErasureFromPartialProperty() {
-    let partial: PartialProperty<Box> = \.n <- 9
-    let any = partial.any
-    #expect(any.value as? Int == 9)
+@Test func anyPropertyIsNoOpOnRootTypeMismatch() {
+    let any: AnyProperty = \Box.n <- 3
+    // Applying a Box-rooted property to a non-Box box must do nothing (safe `as?`, no trap).
+    var wrong: Any = "untouched"
+    any.apply(to: &wrong)
+    #expect(wrong as? String == "untouched")
 }
 
-@Test func anyPropertyApplicatorSetsValue() {
-    let any = Property<Box, Int>(key: \.n, value: 3).any
-    let (updated, didChange) = any.apply(value: 3, to: Box(n: 0))
-    #expect(didChange == true)
-    #expect((updated as? Box) == Box(n: 3))
-}
+// MARK: <- infix overloads (verified through application)
 
-@Test func anyPropertyApplicatorReportsNoChangeOnTypeMismatch() {
-    let any = Property<Box, Int>(key: \.n, value: 3).any
-    // Passing a value of the wrong type fails the internal `as? V` cast → no change.
-    let (updated, didChange) = any.apply(value: "not an int", to: Box(n: 7))
-    #expect(didChange == false)
-    #expect((updated as? Box) == Box(n: 7))
-}
-
-// MARK: Property.apply(source:to:) — the Source-typed applicator wrapper
-
-@Test func applySourceReportsNoChangeBecauseSourceIsNotTheValueType() {
-    let p = Property<Box, Int>(key: \.n, value: 1)
-    let (root, didChange) = p.apply(source: .single(1), to: Box(n: 5))
-    #expect(didChange == false) // a Source is not an Int, so the applicator cast fails
-    #expect(root == Box(n: 5))
-}
-
-// MARK: <- infix overloads
-
-@Test func infixValueToPartialAndAny() {
+@Test func infixValueOverloads() {
+    var b = Box(n: 0)
     let partial: PartialProperty<Box> = \.n <- 1
+    partial.apply(to: &b)
+    #expect(b == Box(n: 1))
+
     let any: AnyProperty = \Box.n <- 2
-    #expect(partial.value as? Int == 1)
     #expect(any.value as? Int == 2)
 }
 
-@Test func infixSourceToPartialAndAny() {
-    let source = Property<Box, Int>.Source.single(11)
-    let partial: PartialProperty<Box> = \.n <- source
+@Test func infixSourceOverloads() {
+    let partial: PartialProperty<Box> = \.n <- Property<Box, Int>.Source.single(11)
+    var b = Box(n: 0)
+    partial.apply(to: &b)
+    #expect(b == Box(n: 11))
+
     let any: AnyProperty = \Box.n <- Property<Box, Int>.Source.single(22)
-    #expect(partial.value as? Int == 11)
     #expect(any.value as? Int == 22)
 }
 
-@Test func infixClosureToPartialAndAny() {
+@Test func infixClosureOverloads() {
     let partial: PartialProperty<Box> = \.n <- { 33 }
+    var b = Box(n: 0)
+    partial.apply(to: &b)
+    #expect(b == Box(n: 33))
+
     let any: AnyProperty = \Box.n <- { 44 }
-    #expect(partial.value as? Int == 33)
     #expect(any.value as? Int == 44)
 }
 
 // MARK: Array + operator
 
 @Test func arrayPlusBuildsPartialPropertyList() {
-    var props: [PartialProperty<Box>] = []
-    props = props + (\Box.n, 5)
+    let props: [PartialProperty<Box>] = [] + (\Box.n, 5)
     #expect(props.count == 1)
-    #expect(props[0].value as? Int == 5)
-    let box = Box(props)
-    #expect(box == Box(n: 5))
+    #expect(Box(props) == Box(n: 5))
+}
+
+@Test func arrayPlusChainsAcrossValueTypes() {
+    // The point of the operator: heterogeneous value types in one statically-typed array.
+    let props: [PartialProperty<OptionalHolder>] = []
+        + (\OptionalHolder.required, 7)
+        + (\OptionalHolder.maybe, Optional("hi"))
+    #expect(props.count == 2)
+    var holder = OptionalHolder(required: 0, maybe: nil)
+    for p in props { p.apply(to: &holder) }
+    #expect(holder == OptionalHolder(required: 7, maybe: "hi"))
 }

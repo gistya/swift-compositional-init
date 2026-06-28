@@ -3,7 +3,7 @@ import Testing
 
 // A statechart-shaped value: compound state (enum / sum) containing a parallel state
 // (struct / product) whose two regions are themselves enums.
-enum Traffic: Equatable, Clonable {
+enum Traffic: Equatable, Cloneable {
     case working(Working)
     case crossing(Crossing)
 
@@ -65,7 +65,7 @@ enum Traffic: Equatable, Clonable {
 
 // MARK: consuming clone
 
-struct BigContext: Clonable, Equatable {
+struct BigContext: Cloneable, Equatable {
     var data: [Int]
     var tag: Int
 }
