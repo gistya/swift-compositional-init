@@ -1,18 +1,16 @@
 import Foundation
 
-public protocol Mockable: Codable, PropertyInitializable {}
-
 /// A property that can generate its own values according to configurable behavior,
 /// for the purpose of mocking a service (testing).
-public protocol MockableProperty: PropertyProtocol where Root: Mockable {
-    var mock: Mock<Value> { get }
+public protocol SourceableProperty: PropertyProtocol {
+    var source: Source<Value> { get }
 }
 
 /// Extension that provides the configurable behavior for the `value` of the property.
-public extension MockableProperty {
+public extension DynamicProperty {
     var value: Value {
         get {
-            switch mock.creationMethod {
+            switch source.creationMethod {
             case .none:
                 fatalError()
                 
@@ -20,7 +18,7 @@ public extension MockableProperty {
                 return value
                 
             case .iterate(let values):
-                var index = mock.iteration
+                var index = source.iteration
                 if index >= values.count {
                     index = values.count % index
                 } 
@@ -42,7 +40,7 @@ public extension MockableProperty {
     }
     
     /// Applies the `mock` value to the `root` object of this MockProperty.
-    func apply(mock: Mock<Value>, to root: Root) -> (Root, didChange: Bool) {
+    func apply(mock: Source<Value>, to root: Root) -> (Root, didChange: Bool) {
         return applicator(root, mock, nil) as! (Self.Root, didChange: Bool)
     }
 }

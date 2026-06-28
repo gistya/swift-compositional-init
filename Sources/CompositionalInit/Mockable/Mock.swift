@@ -1,5 +1,5 @@
 /// Struct defining the configurable and default behavior for MockableProperties.
-public struct Mock<Value>: PropertyInitializable {
+public struct Source<Value>: PropertyInitializable {
     public indirect enum CreationMethod {
         case none
         case single(Value)
@@ -13,7 +13,7 @@ public struct Mock<Value>: PropertyInitializable {
     public var `default`: Value?
     public var creationMethod: CreationMethod
     
-    public static var _blank: Mock<Value> { 
-        Mock<Value>(iteration: 0, default: nil, creationMethod: .none) 
+    public static var _blank: Source<Value> {
+        Source<Value>(iteration: 0, default: nil, creationMethod: .none)
     }
 }

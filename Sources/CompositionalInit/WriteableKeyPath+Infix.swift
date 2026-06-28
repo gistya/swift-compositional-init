@@ -12,10 +12,10 @@ public extension WritableKeyPath {
     }
 }
 
-/// `<-` for a `Mockable` root, pairing a key path with a `Mock` value (now non-throwing, matching
+/// `<-` for a `PropertyInitializable` root, pairing a key path with a `Source` value (now non-throwing, matching
 /// the plain `<-`). Restored after the non-throwing refactor dropped it.
-public extension WritableKeyPath where Root: Mockable {
-    static func <- (left: WritableKeyPath<Root, Value>, right: Mock<Value>) -> PartialProperty<Root> {
-        MockProperty<Root, Value>(key: left, mock: right).partial
+public extension WritableKeyPath where Root: PropertyInitializable {
+    static func <- (left: WritableKeyPath<Root, Value>, right: Source<Value>) -> PartialProperty<Root> {
+        DynamicProperty<Root, Value>(key: left, source: right).partial
     }
 }
