@@ -1,5 +1,5 @@
 import Testing
-@testable import properties
+@testable import CompositionalInit
 
 // A statechart-shaped value: compound state (enum / sum) containing a parallel state
 // (struct / product) whose two regions are themselves enums.

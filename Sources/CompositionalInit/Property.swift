@@ -5,7 +5,7 @@ public struct AnyProperty: AnyPropertyProtocol {
     public typealias Value = Any
     
     private(set) public var key: KP
-    private var _value: Generator<Value>
+    private var _value: Closure<Value>
     
     public var applicator: (Any, Any?, Any?) -> (Any, didChange: Bool)
     
@@ -28,7 +28,7 @@ public struct AnyProperty: AnyPropertyProtocol {
         }
     }
     
-    private enum Generator<Value> {
+    private enum Closure<Value> {
         case value(Value)
         case lambda(() -> Value)
     }

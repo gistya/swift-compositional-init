@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import properties
+@testable import CompositionalInit
 
 struct Test2 {
     var str1: String
@@ -85,10 +85,10 @@ extension Test2: PropertyInitializable {
 
     // MARK: - Mockables test
 
-    typealias GeneratorInput<V> = (initialValue: V?, index: Int?)
+    typealias ClosureInput<V> = (initialValue: V?, index: Int?)
 
-    /// A generator function for a mock value.
-    func gen<V: StringProtocol> (_ input: GeneratorInput<V>) throws -> V {
+    /// A closure function for a sourced value.
+    func gen<V: StringProtocol> (_ input: ClosureInput<V>) throws -> V {
         let val = "\(input.initialValue ?? "2")"
         let index = input.index ?? 0
         return val + "\(index)" as! V
@@ -121,7 +121,7 @@ extension Test2: PropertyInitializable {
     for i in 0...5 {
         magtest2.append((Mag(
             \.a <- 2,
-            \.b <- Mock(iteration: i, default: nil, creationMethod: .iterate(["a", "b", "c", "d", "e"])),
+            \.b <- Source(iteration: i, valuesToIterate: ["a", "b", "c", "d", "e"]),
             \.c <- nil
             ))!
         )
@@ -227,7 +227,7 @@ struct Zag: PropertyInitializable {
 }
 
 /// A test struct of a mockable object, e.g. from a webservice.
-struct Mag: Mockable {
+struct Mag: PropertyInitializable, Codable {
     var a: Int
     var b: String
     var c: Double?

@@ -1,5 +1,5 @@
 import Testing
-@testable import properties
+@testable import CompositionalInit
 
 // Regression: a `(borrowing T) -> Bool` closure stored via `\.kp <- closure` / `clone(mutating:)`
 // silently no-op'd, because the erased applicator round-tripped it through `Any` and `as? V` failed
