@@ -30,7 +30,7 @@ else {
 You can also clone any instance of a conforming type, mutating only certain properties: 
 
 ```swift
-let vanillaIceCream = chocolatIceCream.clone(
+let vanillaIceCream = chocolateIceCream.clone(
     mutating: \.flavor <- "vanilla"
 )
 ```
@@ -58,6 +58,59 @@ print(hotDay.meltingIceCream.softness) // 0.219291
  
 print(hotDay.meltingIceCream.softness) // 0.848912
 ```
+
+Enums work too. Pair a `CasePath` with a key path and you can reach a property buried inside a case:
+
+```swift
+enum Cone: Cloneable {
+    case waffle(Scoops)
+    case cup(Scoops)
+    struct Scoops { var count: Int; var flavor: String }
+
+    enum Path {
+        static let waffle = CasePath<Cone, Scoops>(
+            embed: Cone.waffle,
+            extract: { if case let .waffle(s) = $0 { s } else { nil } }
+        )
+    }
+}
+
+var order = Cone.waffle(.init(count: 1, flavor: "Chocolate"))
+order = order.clone(mutating: Cone.Path.waffle(\.count) <- 3)
+```
+
+If the value happens to be in some other case, the write just no-ops, so you never have to check first:
+
+```swift
+let cup = Cone.cup(.init(count: 2, flavor: "Vanilla"))
+cup.clone(mutating: Cone.Path.waffle(\.count) <- 99) // still a cup, untouched
+```
+
+Need to mock up a pile of instances? `MockProperty` hands you a fresh value each time — cycle through a list, or pick at random:
+
+```swift
+let flavors = MockProperty(\IceCream.flavor, randomize: ["Chocolate", "Vanilla", "Mint"])
+let softness = MockProperty(\IceCream.softness, iterate: [0.1, 0.5, 0.9])
+
+let cone = IceCream(flavors.sampleProperty(), softness.sampleProperty())!
+```
+
+The randomness comes from a generator you hand it, so seed your own when you want the same fixtures every run:
+
+```swift
+var rng = MySeededGenerator(seed: 42)
+let same = IceCream(flavors.sampleProperty(using: &rng),
+                    softness.sampleProperty(using: &rng))!
+```
+
+And when you're threading one big value forward and don't want to copy its storage, `cloned` takes ownership and mutates in place:
+
+```swift
+var batch = chocolateIceCream
+batch = batch.cloned { $0.softness += 0.1 } // no copy when batch is uniquely held
+```
+
+That one even works on `~Copyable` types.
 
 This library grew out of my 2019 Swift Evolution proposal, [Compositional Initialization](https://forums.swift.org/t/pitch-init-wrappers/87095d), which proposed:
 
