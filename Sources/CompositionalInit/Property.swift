@@ -5,32 +5,20 @@ public struct AnyProperty: AnyPropertyProtocol {
     public typealias Value = Any
     
     private(set) public var key: KP
-    private var _value: Closure<Value>
+    public var value: Value
     
     public var applicator: (Any, Any?, Any?) -> (Any, didChange: Bool)
     
     public init<P>(_ base: P) where P: PropertyProtocol {
-        self._value = .value(base.value)
+        self.value = base.value
         self.key = base.key as AnyKeyPath
         self.applicator = base.applicator
     }
     
     public init<P>(_ base: P) where P: PartialPropertyProtocol {
-        self._value = .value(base.value)
+        self.value = base.value
         self.key = base.key as AnyKeyPath
         self.applicator = base.applicator
-    }
-    
-    public var value: Value {
-        switch _value {
-        case let .value(value): value
-        case let .lambda(value): value()
-        }
-    }
-    
-    private enum Closure<Value> {
-        case value(Value)
-        case lambda(() -> Value)
     }
 }
 
@@ -129,7 +117,7 @@ public struct Property<R, V>: PropertyProtocol {
             case .iterate(let iteration, let values):
                 var index = iteration.i
                 if index >= values.count {
-                    index = values.count % index
+                    index = index % values.count
                 }
                 iteration.i += 1
                 return values[values.index(values.startIndex, offsetBy: index)]
