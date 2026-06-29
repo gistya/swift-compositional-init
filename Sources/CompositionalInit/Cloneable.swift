@@ -30,6 +30,26 @@ public extension Cloneable where Self: ~Copyable {
         mutate(&this)
         return this
     }
+
+    /// A `consuming` functional update applying a pre-built batch of ``NonCopyableProperty`` edits in
+    /// one pass — the move-only counterpart of `clone(mutating:)` for properties accumulated at
+    /// runtime (e.g. a reducer). For edits known at the call site, inline `cloned { … }` is simpler.
+    ///
+    /// TODO: when Swift gains key paths over non-copyable types, add a key-path-based
+    /// `NonCopyableProperty` and `<-` overloads so move-only updates regain the typed `<-` sugar and
+    /// duplicate-key identity that the copyable ``PartialProperty`` path enjoys.
+    @inlinable
+    consuming func cloned(applying edits: [NonCopyableProperty<Self>]) -> Self {
+        var this = consume self
+        for edit in edits { edit.apply(to: &this) }
+        return this
+    }
+
+    /// Variadic sugar for ``cloned(applying:)``.
+    @inlinable
+    consuming func cloned(applying edits: NonCopyableProperty<Self>...) -> Self {
+        cloned(applying: edits)
+    }
 }
 
 // MARK: - Copyable updates (key-path and property based)
