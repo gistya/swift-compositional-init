@@ -33,3 +33,4 @@ extension Optional: Blankable { public static var _blank: Wrapped? { nil } }
 extension Array: Blankable { public static var _blank: [Element] { [] } }
 extension Dictionary: Blankable { public static var _blank: [Key: Value] { [:] } }
 extension Set: Blankable { public static var _blank: Set<Element> { [] } }
+extension String: Blankable { public static var _blank: String { "" } }
