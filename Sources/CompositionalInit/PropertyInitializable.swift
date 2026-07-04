@@ -5,18 +5,10 @@
 /// exists because Swift key paths cannot yet be used to assign stored properties at definite-init
 /// time; a compiler feature would remove it. It is spelled with a leading underscore to signal that
 /// it is conformance plumbing, not part of the type's public vocabulary.)
-public protocol PropertyInitializable: Cloneable {
+public protocol PropertyInitializable: Cloneable, Sendable, Blankable {
     /// Failable initialization from a set of properties. Succeeds iff every *required* (non-optional)
     /// stored property is written exactly once across `properties`; otherwise returns `nil`.
     init?(_ properties: [PartialProperty<Self>])
-
-    /// A placeholder instance with every stored property already populated.
-    ///
-    /// Necessary because Swift key paths may not be used to set stored properties during definite
-    /// initialization; the supplied values are overwritten by any property that targets them. The
-    /// soundness of the failable initializer does not depend on which placeholder values are used —
-    /// only required properties that are *actually written* count toward success.
-    static var _blank: Self { get }
 }
 
 public extension PropertyInitializable {
