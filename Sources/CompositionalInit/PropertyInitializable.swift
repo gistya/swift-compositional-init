@@ -5,7 +5,7 @@
 /// exists because Swift key paths cannot yet be used to assign stored properties at definite-init
 /// time; a compiler feature would remove it. It is spelled with a leading underscore to signal that
 /// it is conformance plumbing, not part of the type's public vocabulary.)
-public protocol PropertyInitializable: Cloneable, Sendable, Blankable {
+public protocol PropertyInitializable: Cloneable, Blankable {
     /// Failable initialization from a set of properties. Succeeds iff every *required* (non-optional)
     /// stored property is written exactly once across `properties`; otherwise returns `nil`.
     init?(_ properties: [PartialProperty<Self>])

@@ -125,7 +125,7 @@ public struct WritableCasePath<Root, Value>: Sendable {
     }
 }
 
-public extension CasePath where Root: Equatable {
+public extension CasePath where Root: Equatable & Sendable {
     /// Build a case path from just the case initializer — `CasePath(Event.increment)` — deriving
     /// `extract` by reflection: pull the case's single associated value and confirm the case by
     /// re-embedding and comparing (hence the `Root: Equatable` requirement). Handles unlabeled
