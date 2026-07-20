@@ -1,3 +1,7 @@
+// Reflection is unavailable in Embedded Swift, so this whole file — which exists only to count a
+// type's required (non-`Optional`) stored properties via `Mirror` — is compiled out there. The
+// embedded `PropertyInitializable` path does not count required slots (see PropertyInitializable.swift).
+#if !hasFeature(Embedded)
 public extension Mirror {
     /// The reflected children whose declared type is *not* `Optional` — i.e. the stored properties
     /// that must be set during compositional initialization. Used to count required slots.
@@ -19,3 +23,4 @@ public func isOptional<T>(_ instance: T) -> Bool {
         else { return false }
     return displayStyle == .optional
 }
+#endif

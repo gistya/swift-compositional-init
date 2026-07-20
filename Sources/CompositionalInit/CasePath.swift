@@ -125,6 +125,10 @@ public struct WritableCasePath<Root, Value>: Sendable {
     }
 }
 
+// The reflection-derived case-path initializer needs `Mirror`, so it is unavailable in Embedded
+// Swift. Under embedded, build case paths from an explicit `embed`/`extract` pair (the designated
+// initializer above), which is fully reflection-free.
+#if !hasFeature(Embedded)
 public extension CasePath where Root: Equatable & Sendable {
     /// Build a case path from just the case initializer — `CasePath(Event.increment)` — deriving
     /// `extract` by reflection: pull the case's single associated value and confirm the case by
@@ -155,3 +159,4 @@ public extension CasePath where Root: Equatable & Sendable {
         )
     }
 }
+#endif

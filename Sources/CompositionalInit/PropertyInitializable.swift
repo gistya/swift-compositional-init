@@ -11,6 +11,26 @@ public protocol PropertyInitializable: Cloneable, Blankable {
     init?(_ properties: [PartialProperty<Self>])
 }
 
+#if hasFeature(Embedded)
+public extension PropertyInitializable {
+    /// Embedded Swift has no `Mirror` (so required stored properties can't be counted) and no
+    /// `AnyKeyPath`/`PartialKeyPath` `Hashable` conformance (so written keys can't be de-duplicated by
+    /// a `Set`). Apply every write in order and succeed. This satisfies the sole protocol requirement
+    /// for the identifier enums the embedded build conforms — they have no stored properties, so there
+    /// is nothing to reconstruct or validate. A *struct* conformer targeting embedded should provide
+    /// its own `init?(_:)` if it needs the required-slot guarantee.
+    init?(_ properties: [PartialProperty<Self>]) {
+        var new = Self._blank
+        for property in properties { property.apply(to: &new) }
+        self = new
+    }
+
+    /// Variadic sugar for the array-based failable initializer.
+    init?(_ properties: PartialProperty<Self>...) {
+        self.init(properties)
+    }
+}
+#else
 public extension PropertyInitializable {
     /// The number of stored properties that are *required* — i.e. not `Optional`-typed — and so must
     /// be written for the failable initializer to succeed.
@@ -73,3 +93,4 @@ public extension PropertyInitializable {
         self.init(properties)
     }
 }
+#endif

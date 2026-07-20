@@ -66,7 +66,16 @@ public struct Property<Root, Value> {
 
     /// Whether this property targets an `Optional`-typed (i.e. not required) stored property.
     @inlinable
-    public var isOptional: Bool { Value.self is OptionalProtocol.Type }
+    public var isOptional: Bool {
+        #if hasFeature(Embedded)
+        // Embedded Swift has no runtime protocol-conformance metadata, so this metatype cast can't
+        // be performed. The embedded `PropertyInitializable` init doesn't consult required-slot
+        // counts anyway, so classify everything as required (`false`).
+        false
+        #else
+        Value.self is OptionalProtocol.Type
+        #endif
+    }
 
     /// Erases the `Value` type, yielding a ``PartialProperty`` that can sit in a `[PartialProperty<Root>]`
     /// alongside properties of other value types. Application stays fully typed — no boxing.
